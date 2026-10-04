@@ -130,6 +130,7 @@ Providers, chosen by `TRANSLATE_PROVIDER` (server-side env, never `VITE_`):
 | Provider | Env | Notes |
 |---|---|---|
 | `nllb` (default, added 2026-10-05) | `NLLB_API_URL` optional | Self-hostable nllb-api (NLLB-200 1.3B on CPU, free HF Space). Chosen because the owner cannot attach a billing account. |
+| `opus` (added 2026-10-05) | `HF_API_TOKEN` | HF free inference, Helsinki opus-mt per pair, pivot via English; default fallback when a token exists. Fallback runs on primary 5xx/timeout only (`TRANSLATE_FALLBACK_PROVIDER`, `TRANSLATE_TIMEOUT_MS`). |
 | `google` (added 2026-10-05) | `GOOGLE_TRANSLATE_API_KEY` | Cloud Translation v2; 500k chars/month free; all nine languages. |
 | `libretranslate` | `LIBRETRANSLATE_URL` (default `https://libretranslate.com`), `LIBRETRANSLATE_API_KEY` optional | No Kinyarwanda. |
 | `huggingface` | `HF_API_TOKEN`, `HF_MODEL` (default `facebook/nllb-200-distilled-600M`) | Supports Kinyarwanda (`kin_Latn`). ISO codes map to NLLB codes in `server/translate/languages.js`. |
