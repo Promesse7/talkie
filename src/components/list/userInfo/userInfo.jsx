@@ -4,7 +4,7 @@ import video from './images/video.png';
 import edit from './images/edit.png';
 import more from './images/more.png';
 import prom from "./images/rp2.jpg"
-import { useUserStore } from "../../lib/userStore"
+import { useUserStore } from "../../../lib/stores/userStore.js"
 
 
 

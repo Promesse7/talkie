@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { auth } from './firebase';
+import { auth } from '../firebase.js';
 import { onAuthStateChanged } from 'firebase/auth';
 
 export const useChatStore = create((set, get) => ({

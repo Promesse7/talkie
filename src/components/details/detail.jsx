@@ -2,10 +2,10 @@ import "./detail.css"
 import arrowUp from "./up.png";
 import arrowDown from "./down.png";
 import download from "./download.png";
-import { useUserStore } from "../lib/userStore";
+import { useUserStore } from "../../lib/stores/userStore.js";
 import profile from "./images/placeholder.png";
-import { auth, db } from "../lib/firebase";
-import { useChatStore } from "../lib/chatStore "
+import { auth, db } from "../../lib/firebase.js";
+import { useChatStore } from "../../lib/stores/chatStore.js"
 import { arrayRemove, arrayUnion, doc, updateDoc } from "firebase/firestore";
 
 

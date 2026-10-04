@@ -5,10 +5,10 @@ import plus from "./plus.png";
 import minus from "./minus.png";
 import AddUser from "./addUser/addUser";
 import profile from "./images/placeholder.png";
-import { useUserStore } from "../../lib/userStore";
+import { useUserStore } from "../../../lib/stores/userStore.js";
 import { doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
-import { db } from "../../lib/firebase";
-import { useChatStore } from "../../lib/chatStore ";
+import { db } from "../../../lib/firebase.js";
+import { useChatStore } from "../../../lib/stores/chatStore.js";
 
 const ChatList = () => {
     const [chats, setChats] = useState([]);

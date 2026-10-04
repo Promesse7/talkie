@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../lib/firebase.js";
+import { auth, db } from "../../lib/firebase.js";
 import { doc, setDoc } from "firebase/firestore";
-import { useChatStore } from "../lib/chatStore .js";
+import { useChatStore } from "../../lib/stores/chatStore.js";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import profile from "./rp.png";
 import logo from "./logo.png";
-import Upload from "../lib/upload.js";
+import Upload from "../../lib/upload.js";
 
 const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
     const [avatar, setAvatar] = useState({ file: null, url: "" });

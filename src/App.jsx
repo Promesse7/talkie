@@ -1,4 +1,3 @@
-import './App.css';
 import List from './components/list/list';
 import Chat from './components/chat/chat';
 import Detail from './components/details/detail';
@@ -8,9 +7,9 @@ import LandingPage from './components/landingPage/LandingPage';
 import Notification from './components/notification/Notification';
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './components/lib/firebase';
-import { useUserStore } from './components/lib/userStore.js';
-import { useChatStore } from './components/lib/chatStore .js';
+import { auth } from './lib/firebase.js';
+import { useUserStore } from './lib/stores/userStore.js';
+import { useChatStore } from './lib/stores/chatStore.js';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);

@@ -10,9 +10,9 @@ import profile from "./images/placeholder.png";
 import EmojiPicker from "emoji-picker-react";
 import { useEffect, useRef, useState } from "react";
 import { arrayUnion, doc, getDoc, onSnapshot, updateDoc, writeBatch } from "firebase/firestore";
-import { db } from "../lib/firebase";
-import { useChatStore } from "../lib/chatStore ";
-import Upload from "../lib/upload";
+import { db } from "../../lib/firebase.js";
+import { useChatStore } from "../../lib/stores/chatStore.js";
+import Upload from "../../lib/upload.js";
 
 const Chat = () => {
     const [chat, setChat] = useState(null);

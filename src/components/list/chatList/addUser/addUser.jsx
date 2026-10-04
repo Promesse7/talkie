@@ -1,7 +1,7 @@
 import "./addUser.css";
 import rp from "./rp.png";
-import { useUserStore } from "../../../lib/userStore";
-import { db } from "../../../lib/firebase";
+import { useUserStore } from "../../../../lib/stores/userStore.js";
+import { db } from "../../../../lib/firebase.js";
 import {
     arrayUnion,
     collection,

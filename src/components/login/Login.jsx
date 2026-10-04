@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../lib/firebase.js";
+import { auth, db } from "../../lib/firebase.js";
 import { doc, getDoc } from "firebase/firestore";
-import { useChatStore } from "../lib/chatStore .js";
+import { useChatStore } from "../../lib/stores/chatStore.js";
 import logo from "./logo.png";
 
 const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
