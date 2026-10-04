@@ -33,3 +33,14 @@ describe('translate (client)', () => {
     expect(await translate('hi', 'en', 'fr', vi.fn())).toBe('salut');
   });
 });
+
+describe('translate (client) auth', () => {
+  it('sends the Firebase ID token as a bearer header when a provider is registered', async () => {
+    const { setAuthTokenProvider } = await import('./translate.js');
+    setAuthTokenProvider(async () => 'id-token');
+    const f = vi.fn(async () => ok({ translatedText: 'salut' }));
+    await translate('hi', 'en', 'fr', f);
+    expect(f.mock.calls[0][1].headers.Authorization).toBe('Bearer id-token');
+    setAuthTokenProvider(null);
+  });
+});

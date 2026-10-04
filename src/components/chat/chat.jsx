@@ -13,7 +13,7 @@ import { toast } from "react-toastify";
 import MessageBubble from "./MessageBubble.jsx";
 import { useChatStore } from "../../lib/stores/chatStore.js";
 import { useUserStore } from "../../lib/stores/userStore.js";
-import { blockFlags } from "../../lib/chat.js";
+import { absorbDroppedMessages, blockFlags, dedupeById } from "../../lib/chat.js";
 import { languageName } from "../../lib/languages.js";
 import {
     fetchOlderMessages,
@@ -24,16 +24,12 @@ import {
 
 const PAGE_SIZE = 50;
 
-function dedupeById(list) {
-    const seen = new Set();
-    return list.filter((m) => (seen.has(m.id) ? false : (seen.add(m.id), true)));
-}
-
 const Chat = () => {
+    // `live` is the newest PAGE_SIZE messages (real-time). `older` holds everything the
+    // user paged back to, plus messages that slid out of the live window as new ones arrived.
     const [live, setLive] = useState(null);
     const [older, setOlder] = useState([]);
-    const [cursor, setCursor] = useState(null);
-    const [hasMore, setHasMore] = useState(false);
+    const [reachedEnd, setReachedEnd] = useState(false);
     const [loadingOlder, setLoadingOlder] = useState(false);
     const [open, setOpen] = useState(false);
     const [text, setText] = useState("");
@@ -45,6 +41,7 @@ const Chat = () => {
     const currentUser = useUserStore((s) => s.currentUser);
     const endRef = useRef(null);
     const lastIdRef = useRef(null);
+    const liveRef = useRef(null);
 
     const { isCurrentUserBlocked, isReceiverBlocked } = blockFlags(currentUser, receiver);
     const blocked = isCurrentUserBlocked || isReceiverBlocked;
@@ -53,16 +50,16 @@ const Chat = () => {
         if (!chatId) return undefined;
         setLive(null);
         setOlder([]);
-        setCursor(null);
-        setHasMore(false);
+        setReachedEnd(false);
         lastIdRef.current = null;
+        liveRef.current = null;
         return subscribeToMessages(
             chatId,
             PAGE_SIZE,
-            (messages, oldestDoc) => {
+            (messages) => {
+                setOlder((prev) => absorbDroppedMessages(liveRef.current, messages, prev));
+                liveRef.current = messages;
                 setLive(messages);
-                setCursor((prev) => prev ?? oldestDoc);
-                setHasMore((prev) => prev || messages.length === PAGE_SIZE);
             },
             (err) => {
                 console.error(err);
@@ -82,15 +79,17 @@ const Chat = () => {
     }, [live, chatId, currentUser]);
 
     const messages = useMemo(() => dedupeById([...older, ...(live ?? [])]), [older, live]);
+    // A full live page means there may be more history; a short one is the whole chat.
+    const hasMore = !reachedEnd && (live?.length ?? 0) >= PAGE_SIZE;
 
     const handleLoadOlder = async () => {
-        if (!cursor || loadingOlder) return;
+        const oldest = messages[0];
+        if (!oldest?.createdAt || loadingOlder) return;
         setLoadingOlder(true);
         try {
-            const result = await fetchOlderMessages(chatId, cursor, PAGE_SIZE);
-            setOlder((prev) => [...result.messages, ...prev]);
-            setCursor(result.cursor);
-            setHasMore(result.messages.length === PAGE_SIZE);
+            const page = await fetchOlderMessages(chatId, oldest.createdAt, PAGE_SIZE);
+            setOlder((prev) => dedupeById([...page, ...prev]));
+            if (page.length < PAGE_SIZE) setReachedEnd(true);
         } catch (err) {
             console.error(err);
             toast.error("Could not load earlier messages.");

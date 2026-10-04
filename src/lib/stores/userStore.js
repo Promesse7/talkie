@@ -9,7 +9,7 @@ import { subscribeToUser } from '../chats.js';
  *  - 'loading'        auth state or profile not known yet
  *  - 'signedOut'      no Firebase auth user
  *  - 'ready'          auth user and Firestore profile both present
- *  - 'profileMissing' auth user exists but users/{uid} does not
+ *  - 'profileMissing' auth user exists but users/{uid} does not (or cannot be read)
  */
 export const useUserStore = create((set, get) => ({
   status: 'loading',
@@ -44,8 +44,17 @@ export const useUserStore = create((set, get) => ({
     });
   },
 
-  /** Registration creates the auth user before the profile doc; suppress 'profileMissing' meanwhile. */
+  /**
+   * Registration creates the auth user before the profile doc; suppress 'profileMissing'
+   * meanwhile. When registration ends without a profile (the write failed), surface it
+   * instead of staying on the spinner forever.
+   */
   setRegistering(value) {
+    const { authUser, currentUser } = get();
+    if (!value && authUser && !currentUser) {
+      set({ registering: false, status: 'profileMissing' });
+      return;
+    }
     set({ registering: value });
   },
 

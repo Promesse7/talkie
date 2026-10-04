@@ -1,4 +1,4 @@
-import { translateText, TranslateError } from './index.js';
+import { handleTranslateRequest } from './handler.js';
 
 function send(res, status, body) {
   res.statusCode = status;
@@ -6,14 +6,31 @@ function send(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
+async function readJsonBody(req) {
+  const chunks = [];
+  for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  const raw = Buffer.concat(chunks).toString('utf8');
+  return raw ? JSON.parse(raw) : {};
+}
+
+/** Node http handler used by the Vite dev server so `npm run dev` serves /api/translate. */
 export function createTranslateMiddleware(env, fetchImpl = globalThis.fetch) {
   return async (req, res) => {
-    if (req.method !== 'POST') return send(res, 405, { error: 'Method not allowed' });
-    let raw = '';
-    for await (const chunk of req) raw += chunk;
     let body;
-    try { body = JSON.parse(raw || '{}'); } catch { return send(res, 400, { error: 'Invalid JSON body' }); }
-    try { send(res, 200, await translateText(body, env, fetchImpl)); }
-    catch (err) { send(res, err instanceof TranslateError ? err.status : 500, { error: err.message }); }
+    try {
+      body = await readJsonBody(req);
+    } catch {
+      return send(res, 400, { error: 'Invalid JSON body' });
+    }
+    try {
+      const result = await handleTranslateRequest(
+        { method: req.method, headers: req.headers, body },
+        env,
+        fetchImpl
+      );
+      send(res, result.status, result.body);
+    } catch (err) {
+      send(res, 500, { error: err?.message ?? 'Unexpected error' });
+    }
   };
 }

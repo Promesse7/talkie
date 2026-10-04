@@ -23,28 +23,26 @@ const messagesRef = (chatId) => collection(db, 'chats', chatId, 'messages');
 const toMessage = (d) => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) });
 
 /**
- * Live subscription to the newest `pageSize` messages of a chat.
- * Calls back with messages oldest -> newest and the Firestore doc to paginate from.
+ * Live subscription to the newest `pageSize` messages of a chat, oldest -> newest.
  */
 export function subscribeToMessages(chatId, pageSize, onChange, onError = console.error) {
   const q = query(messagesRef(chatId), orderBy('createdAt', 'desc'), limit(pageSize));
-  return onSnapshot(
-    q,
-    (snap) => {
-      const docs = snap.docs;
-      onChange(docs.map(toMessage).reverse(), docs[docs.length - 1] ?? null);
-    },
-    onError
-  );
+  return onSnapshot(q, (snap) => onChange(snap.docs.map(toMessage).reverse()), onError);
 }
 
-export async function fetchOlderMessages(chatId, cursor, pageSize) {
-  const q = query(messagesRef(chatId), orderBy('createdAt', 'desc'), startAfter(cursor), limit(pageSize));
+/**
+ * Messages strictly older than `beforeCreatedAt` (a Firestore Timestamp taken from the
+ * oldest message currently displayed), oldest -> newest.
+ */
+export async function fetchOlderMessages(chatId, beforeCreatedAt, pageSize) {
+  const q = query(
+    messagesRef(chatId),
+    orderBy('createdAt', 'desc'),
+    startAfter(beforeCreatedAt),
+    limit(pageSize)
+  );
   const snap = await getDocs(q);
-  return {
-    messages: snap.docs.map(toMessage).reverse(),
-    cursor: snap.docs[snap.docs.length - 1] ?? null,
-  };
+  return snap.docs.map(toMessage).reverse();
 }
 
 /**

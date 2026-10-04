@@ -94,7 +94,8 @@ dry-run by default. It is not executed as part of this work.
 
 ```
 users/{uid}:     read if signed in; create/update if uid == auth.uid
-chats/{chatId}:  read if auth.uid in resource.participants
+chats/{chatId}:  get  if resource == null or auth.uid in resource.participants  (probe before create)
+                 list if auth.uid in resource.participants
                  create if auth.uid in request.participants and participants.size() == 2
                  update if auth.uid in resource.participants and participants unchanged
   messages/{id}: read if participant
@@ -133,7 +134,7 @@ Providers, chosen by `TRANSLATE_PROVIDER` (server-side env, never `VITE_`):
 | `none` | | Returns the original text; lets the app run with translation disabled. |
 
 Short-circuits: `source === target` returns the text; empty text returns empty. Any provider error
-returns 502 with a message. Request body limits text to 2000 chars.
+returns 502 with a message. Request body limits text to 2000 chars. Requests must carry a Firebase ID token (Authorization: Bearer); the server verifies it via Identity Toolkit using FIREBASE_WEB_API_KEY (fallback VITE_FIREBASE_API_KEY) and answers 401 otherwise.
 
 ### Vite dev
 

@@ -56,7 +56,14 @@ export default function App() {
     }
   }, [status, closeChat]);
 
-  if (status === 'loading') return <Spinner />;
+  if (status === 'loading') {
+    return (
+      <>
+        <Spinner />
+        <Notification />
+      </>
+    );
+  }
 
   let content;
   if (status === 'profileMissing') {

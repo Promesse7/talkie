@@ -63,6 +63,8 @@ deploy, Firestore will log an error with a link to create it by hand.
 
 ## Translation
 
+The translation endpoint only serves signed-in users: the client sends the Firebase ID token as a bearer token and the server verifies it with Identity Toolkit (no Admin SDK needed). Set FIREBASE_WEB_API_KEY on the server, or leave it unset to fall back to VITE_FIREBASE_API_KEY.
+
 The translation backend is chosen with `TRANSLATE_PROVIDER`. These variables are server-side
 only; they are read by the serverless function and the Vite dev middleware, never by the browser.
 

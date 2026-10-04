@@ -1,10 +1,11 @@
-import { translateText, TranslateError } from '../server/translate/index.js';
+import { handleTranslateRequest } from '../server/translate/handler.js';
 
+/** Vercel serverless function: POST /api/translate */
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  try {
-    res.status(200).json(await translateText(req.body ?? {}, process.env, fetch));
-  } catch (err) {
-    res.status(err instanceof TranslateError ? err.status : 500).json({ error: err.message });
-  }
+  const result = await handleTranslateRequest(
+    { method: req.method, headers: req.headers, body: req.body },
+    process.env,
+    fetch
+  );
+  res.status(result.status).json(result.body);
 }
