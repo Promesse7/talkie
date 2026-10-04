@@ -47,3 +47,31 @@
     }
   }
   
+.languageSettings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 20px;
+  margin: 0 20px 10px;
+  background: rgba(17, 25, 40, 0.6);
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.languageSettings select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(17, 25, 40, 0.85);
+  color: #fff;
+}
+
+.languageSettings button {
+  align-self: flex-end;
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
