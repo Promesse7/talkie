@@ -70,7 +70,8 @@ only; they are read by the serverless function and the Vite dev middleware, neve
 
 | `TRANSLATE_PROVIDER`      | Env vars                                                                                   | Notes                                                        |
 |---------------------------|--------------------------------------------------------------------------------------------|--------------------------------------------------------------|
-| `libretranslate` (default)| `LIBRETRANSLATE_URL` (default `https://libretranslate.com`), `LIBRETRANSLATE_API_KEY` | The public libretranslate.com instance requires an API key (portal.libretranslate.com); without one every request returns 502 and messages show untranslated. Self-hosted instances usually need no key. No Kinyarwanda support. |
+| `google` (default)         | `GOOGLE_TRANSLATE_API_KEY`                                                                  | Google Cloud Translation v2 with an API key. First 500,000 characters per month free, then pay as you go. Supports all nine Talkie languages including Kinyarwanda and Swahili. Recommended for the pilot and for production. See "Getting a Google Translate API key" below. |
+| `libretranslate`          | `LIBRETRANSLATE_URL` (default `https://libretranslate.com`), `LIBRETRANSLATE_API_KEY` | The public libretranslate.com instance requires an API key (portal.libretranslate.com); without one every request returns 502 and messages show untranslated. Self-hosted instances usually need no key. No Kinyarwanda support. |
 | `huggingface`             | `HF_API_TOKEN`, `HF_MODEL` (default `facebook/nllb-200-distilled-600M`)                    | NLLB supports Kinyarwanda (`kin_Latn`). ISO codes are mapped to NLLB codes in `server/translate/languages.js`. |
 | `none`                    | none                                                                                       | Returns the original text; lets the app run with translation disabled. |
 
@@ -78,6 +79,17 @@ The endpoint is `POST /api/translate` with `{ text, source, target }` and answer
 `{ translatedText, provider }`. `source === target` and empty text short-circuit without
 calling a provider. Text is limited to 2000 characters. Provider errors return 502 and the
 client falls back to showing the original text.
+
+### Getting a Google Translate API key
+
+1. Open https://console.cloud.google.com and select the Firebase project (it is already a Google Cloud project), or create a new one.
+2. Billing: APIs > Library > search "Cloud Translation API" > Enable. Google requires a billing account on the project even for the free tier; the first 500,000 characters per month are not charged.
+3. APIs & Services > Credentials > Create credentials > API key. Copy it.
+4. Restrict the key (Edit key): under API restrictions choose "Restrict key" and tick only "Cloud Translation API". Leave application restrictions on "None" because the key is used server-side.
+5. Put it in `.env` as `GOOGLE_TRANSLATE_API_KEY=...` for local dev, and add the same variable in Vercel > Project > Settings > Environment Variables for the deployment.
+6. Verify locally: `npm run dev`, sign in, and send a message to a user whose language differs from yours. Or run `npm run translate:check` to call the provider directly.
+
+To cap cost, set a quota in APIs & Services > Cloud Translation API > Quotas (characters per day) and a billing budget alert.
 
 On Vercel, set these as project environment variables. Never prefix them with `VITE_`; that
 would bundle them into the client and expose the API keys.

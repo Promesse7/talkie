@@ -34,10 +34,10 @@ describe('validation', () => {
   });
 });
 
-describe('libretranslate provider (default)', () => {
+describe('libretranslate provider', () => {
   it('posts q/source/target and returns translatedText', async () => {
     const fetchImpl = vi.fn(async () => jsonResponse({ translatedText: 'salut' }));
-    const out = await translateText({ text: 'hi', source: 'en', target: 'fr' }, { LIBRETRANSLATE_URL: 'https://lt.example/', LIBRETRANSLATE_API_KEY: 'k' }, fetchImpl);
+    const out = await translateText({ text: 'hi', source: 'en', target: 'fr' }, { TRANSLATE_PROVIDER: 'libretranslate', LIBRETRANSLATE_URL: 'https://lt.example/', LIBRETRANSLATE_API_KEY: 'k' }, fetchImpl);
     expect(out).toEqual({ translatedText: 'salut', provider: 'libretranslate' });
     const [url, init] = fetchImpl.mock.calls[0];
     expect(url).toBe('https://lt.example/translate');
@@ -45,11 +45,11 @@ describe('libretranslate provider (default)', () => {
   });
   it('maps provider failure to 502', async () => {
     const fetchImpl = vi.fn(async () => jsonResponse({ error: 'quota' }, 429));
-    await expect(translateText({ text: 'hi', source: 'en', target: 'fr' }, {}, fetchImpl)).rejects.toMatchObject({ status: 502 });
+    await expect(translateText({ text: 'hi', source: 'en', target: 'fr' }, { TRANSLATE_PROVIDER: 'libretranslate' }, fetchImpl)).rejects.toMatchObject({ status: 502 });
   });
   it('maps network failure to 502', async () => {
     const fetchImpl = vi.fn(async () => { throw new Error('ECONNREFUSED'); });
-    await expect(translateText({ text: 'hi', source: 'en', target: 'fr' }, {}, fetchImpl)).rejects.toBeInstanceOf(TranslateError);
+    await expect(translateText({ text: 'hi', source: 'en', target: 'fr' }, { TRANSLATE_PROVIDER: 'libretranslate' }, fetchImpl)).rejects.toBeInstanceOf(TranslateError);
   });
 });
 
@@ -75,4 +75,10 @@ describe('huggingface provider', () => {
 describe('toNllbCode', () => {
   it('maps supported codes', () => { expect(toNllbCode('rw')).toBe('kin_Latn'); expect(toNllbCode('zh')).toBe('zho_Hans'); });
   it('throws on unknown', () => { expect(() => toNllbCode('xx')).toThrow(); });
+});
+
+describe('default provider', () => {
+  it('is google, so a missing key explains itself', async () => {
+    await expect(translateText({ text: 'hi', source: 'en', target: 'rw' }, {}, vi.fn())).rejects.toMatchObject({ status: 500, message: expect.stringContaining('GOOGLE_TRANSLATE_API_KEY') });
+  });
 });

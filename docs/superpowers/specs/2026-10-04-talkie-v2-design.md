@@ -129,7 +129,8 @@ Providers, chosen by `TRANSLATE_PROVIDER` (server-side env, never `VITE_`):
 
 | Provider | Env | Notes |
 |---|---|---|
-| `libretranslate` (default) | `LIBRETRANSLATE_URL` (default `https://libretranslate.com`), `LIBRETRANSLATE_API_KEY` optional | No Kinyarwanda. |
+| `google` (default, added 2026-10-05) | `GOOGLE_TRANSLATE_API_KEY` | Cloud Translation v2; 500k chars/month free; all nine languages. |
+| `libretranslate` | `LIBRETRANSLATE_URL` (default `https://libretranslate.com`), `LIBRETRANSLATE_API_KEY` optional | No Kinyarwanda. |
 | `huggingface` | `HF_API_TOKEN`, `HF_MODEL` (default `facebook/nllb-200-distilled-600M`) | Supports Kinyarwanda (`kin_Latn`). ISO codes map to NLLB codes in `server/translate/languages.js`. |
 | `none` | | Returns the original text; lets the app run with translation disabled. |
 

@@ -73,14 +73,33 @@ async function huggingFace({ text, source, target }, env, fetchImpl) {
   return { translatedText: first.translation_text, provider: 'huggingface' };
 }
 
-const PROVIDERS = { libretranslate: libreTranslate, huggingface: huggingFace };
+// Google Cloud Translation v2 (basic) with an API key. Supports every Talkie language,
+// including Kinyarwanda and Swahili; the first 500k characters per month are free.
+const GOOGLE_TRANSLATE_URL = 'https://translation.googleapis.com/language/translate/v2';
+const GOOGLE_LANG_ALIASES = { zh: 'zh-CN' };
+const toGoogleCode = (code) => GOOGLE_LANG_ALIASES[code] ?? code;
+
+async function googleTranslate({ text, source, target }, env, fetchImpl) {
+  const key = env.GOOGLE_TRANSLATE_API_KEY;
+  if (!key) throw new TranslateError(500, 'GOOGLE_TRANSLATE_API_KEY is not configured');
+  const data = await safeFetch(fetchImpl, `${GOOGLE_TRANSLATE_URL}?key=${encodeURIComponent(key)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ q: text, source: toGoogleCode(source), target: toGoogleCode(target), format: 'text' }),
+  });
+  const translated = data?.data?.translations?.[0]?.translatedText;
+  if (typeof translated !== 'string') throw new TranslateError(502, 'Translation provider returned an unexpected response');
+  return { translatedText: translated, provider: 'google' };
+}
+
+const PROVIDERS = { google: googleTranslate, libretranslate: libreTranslate, huggingface: huggingFace };
 
 export async function translateText(body, env = {}, fetchImpl = globalThis.fetch) {
   const { text, source, target } = validate(body);
   if (!text.trim()) return { translatedText: '', provider: 'none' };
   if (source === target) return { translatedText: text, provider: 'none' };
 
-  const providerName = String(env.TRANSLATE_PROVIDER || 'libretranslate').toLowerCase();
+  const providerName = String(env.TRANSLATE_PROVIDER || 'google').toLowerCase();
   if (providerName === 'none') return { translatedText: text, provider: 'none' };
 
   const provider = PROVIDERS[providerName];
