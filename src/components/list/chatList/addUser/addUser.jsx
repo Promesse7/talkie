@@ -1,136 +1,74 @@
+import React, { useState } from "react";
+import { toast } from "react-toastify";
 import "./addUser.css";
 import rp from "./rp.png";
 import { useUserStore } from "../../../../lib/stores/userStore.js";
-import { db } from "../../../../lib/firebase.js";
-import {
-    arrayUnion,
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    query,
-    serverTimestamp,
-    setDoc,
-    updateDoc,
-    where,
-    writeBatch,
-} from "firebase/firestore";
-import React, { useState } from "react";
+import { ensureChat, findUserByUsername } from "../../../../lib/chats.js";
+import { languageName } from "../../../../lib/languages.js";
 
-const AddUser = ({ onAddChat }) => {
+const AddUser = ({ onChatOpened }) => {
     const [user, setUser] = useState(null);
-    const { currentUser } = useUserStore();
+    const [searching, setSearching] = useState(false);
+    const [adding, setAdding] = useState(false);
+    const currentUser = useUserStore((s) => s.currentUser);
 
     const handleSearch = async (e) => {
         e.preventDefault();
-        const formData = new FormData(e.target);
-        const username = formData.get("username");
-
+        const username = new FormData(e.target).get("username")?.toString().trim();
+        if (!username) return;
+        setSearching(true);
         try {
-            const userRef = collection(db, "users");
-            const q = query(userRef, where("username", "==", username));
-            const querySnapShot = await getDocs(q);
-
-            if (!querySnapShot.empty) {
-                setUser(querySnapShot.docs[0].data());
-            } else {
+            const found = await findUserByUsername(username);
+            if (!found) {
                 setUser(null);
-                console.log("No user found with that username.");
+                toast.info("No user found with that username.");
+            } else if (found.id === currentUser.id) {
+                setUser(null);
+                toast.info("That is you!");
+            } else {
+                setUser(found);
             }
         } catch (err) {
-            console.log(err);
+            console.error(err);
+            toast.error("Search failed. Try again.");
+        } finally {
+            setSearching(false);
         }
     };
 
     const handleAdd = async () => {
         if (!user) return;
-
-        const chatRef = collection(db, "chats");
-        const userChatsRef = collection(db, "userChats");
-        const batch = writeBatch(db);
-
+        setAdding(true);
         try {
-            const newChatRef = doc(chatRef);
-            await setDoc(newChatRef, {
-                createdAt: serverTimestamp(),
-                messages: [],
-            });
-
-            const userChatData = {
-                chatId: newChatRef.id,
-                lastMessage: "",
-                receiverId: currentUser.id,
-                updatedAt: new Date(), // Placeholder date
-            };
-
-            const currentUserChatData = {
-                chatId: newChatRef.id,
-                lastMessage: "",
-                receiverId: user.id,
-                updatedAt: new Date(), // Placeholder date
-            };
-
-            // Ensure the user document exists before updating
-            const userDocRef = doc(userChatsRef, user.id);
-            const userDoc = await getDoc(userDocRef);
-            if (!userDoc.exists()) {
-                await setDoc(userDocRef, { chats: [] });
-            }
-
-            // Ensure the currentUser document exists before updating
-            const currentUserDocRef = doc(userChatsRef, currentUser.id);
-            const currentUserDoc = await getDoc(currentUserDocRef);
-            if (!currentUserDoc.exists()) {
-                await setDoc(currentUserDocRef, { chats: [] });
-            }
-
-            batch.update(userDocRef, {
-                chats: arrayUnion(userChatData),
-            });
-            batch.update(currentUserDocRef, {
-                chats: arrayUnion(currentUserChatData),
-            });
-
-            await batch.commit();
-
-            // Update the timestamps separately
-            await updateDoc(userDocRef, {
-                "chats.$[element].updatedAt": serverTimestamp(),
-            }, {
-                arrayFilters: [{ "element.chatId": newChatRef.id }],
-            });
-
-            await updateDoc(currentUserDocRef, {
-                "chats.$[element].updatedAt": serverTimestamp(),
-            }, {
-                arrayFilters: [{ "element.chatId": newChatRef.id }],
-            });
-
-            // Pass the new chat data back to ChatList
-            onAddChat({
-                ...currentUserChatData,
-                user,
-            });
-
-            setUser(null); // Clear the search result after adding
+            const chatId = await ensureChat(currentUser, user);
+            onChatOpened(chatId, user);
+            setUser(null);
         } catch (err) {
-            console.log(err);
+            console.error(err);
+            toast.error("Could not start the chat.");
+        } finally {
+            setAdding(false);
         }
     };
 
     return (
         <div className="addUser">
             <form onSubmit={handleSearch}>
-                <input type="text" placeholder="Username" name="username" />
-                <button>Search</button>
+                <input type="text" placeholder="Username" name="username" aria-label="Username" autoComplete="off" />
+                <button disabled={searching}>{searching ? "Searching..." : "Search"}</button>
             </form>
             {user && (
                 <div className="user">
                     <div className="detail">
                         <img src={user.avatar || rp} alt="" />
-                        <span>{user.username}</span>
+                        <div>
+                            <span>{user.username}</span>
+                            <small>{languageName(user.preferredLanguage)}</small>
+                        </div>
                     </div>
-                    <button onClick={handleAdd}>Add User</button>
+                    <button type="button" onClick={handleAdd} disabled={adding}>
+                        {adding ? "Opening..." : "Start chat"}
+                    </button>
                 </div>
             )}
         </div>

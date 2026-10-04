@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import "./chatList.css";
 import search from "./search.png";
 import plus from "./plus.png";
@@ -6,105 +7,86 @@ import minus from "./minus.png";
 import AddUser from "./addUser/addUser";
 import profile from "./images/placeholder.png";
 import { useUserStore } from "../../../lib/stores/userStore.js";
-import { doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
-import { db } from "../../../lib/firebase.js";
 import { useChatStore } from "../../../lib/stores/chatStore.js";
+import { subscribeToChats, markChatSeen } from "../../../lib/chats.js";
 
 const ChatList = () => {
     const [chats, setChats] = useState([]);
     const [addMode, setAddMode] = useState(false);
     const [input, setInput] = useState("");
 
-    const { currentUser } = useUserStore();
-    const { changeChat } = useChatStore();
+    const currentUser = useUserStore((s) => s.currentUser);
+    const openChat = useChatStore((s) => s.openChat);
+    const activeChatId = useChatStore((s) => s.chatId);
 
     useEffect(() => {
-        if (!currentUser || !currentUser.id) return;
-
-        const unSub = onSnapshot(doc(db, "userChats", currentUser.id), async (res) => {
-            const data = res.data();
-            if (!data || !data.chats) return;
-
-            const items = data.chats;
-
-            const promises = items.map(async (item) => {
-                const userDocRef = doc(db, "users", item.receiverId);
-                const userDocSnap = await getDoc(userDocRef);
-                const user = userDocSnap.data();
-
-                return { ...item, user };
-            });
-
-            const chatData = await Promise.all(promises);
-
-            setChats(chatData.sort((a, b) => b.updatedAt - a.updatedAt));
+        if (!currentUser?.id) return undefined;
+        return subscribeToChats(currentUser.id, setChats, (err) => {
+            console.error(err);
+            toast.error("Could not load your chats.");
         });
+    }, [currentUser?.id]);
 
-        return () => {
-            unSub();
-        };
-    }, [currentUser]);
-
-    const handleSelect = async (chat) => {
-        const chatIndex = chats.findIndex((item) => item.chatId === chat.chatId);
-
-        if (chatIndex !== -1) {
-            chats[chatIndex].isSeen = true;
-            setChats([...chats]);
-
-            await updateDoc(doc(db, "userChats", currentUser.id), {
-                chats: chats.map((item) =>
-                    item.chatId === chat.chatId ? { ...item, isSeen: true } : item
-                ),
-            });
-
-            changeChat(chat.chatId, chat.user);
-        }
+    const handleSelect = (chat) => {
+        if (!chat.user) return;
+        openChat(chat.id, chat.user);
+        markChatSeen(chat.id, currentUser.id).catch(console.error);
     };
 
-    const handleAddChat = (newChat) => {
-        setChats((prevChats) => [...prevChats, newChat]);
+    const handleChatOpened = (chatId, user) => {
+        openChat(chatId, user);
+        setAddMode(false);
     };
 
-    const filteredChats = chats.filter(chat => 
-        chat.user && chat.user.username && 
-        chat.user.username.toLowerCase().includes(input.toLowerCase())
+    const filteredChats = chats.filter((chat) =>
+        (chat.user?.username ?? "").toLowerCase().includes(input.toLowerCase())
     );
 
     return (
         <div className="chatList">
             <div className="search">
                 <div className="searchbar">
-                    <img src={search} alt="Search" />
-                    <input 
-                        type="text" 
-                        placeholder="Search" 
+                    <img src={search} alt="" />
+                    <input
+                        type="text"
+                        placeholder="Search"
+                        aria-label="Search chats"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                     />
                 </div>
                 <img
                     src={addMode ? minus : plus}
-                    alt="Toggle Add User"
+                    alt={addMode ? "Close add user" : "Add user"}
+                    role="button"
                     className="add"
                     onClick={() => setAddMode((prev) => !prev)}
                 />
             </div>
-            {filteredChats.map((chat) => (
-                <div
-                    className="item"
-                    key={chat.chatId}
-                    onClick={() => handleSelect(chat)}
-                    style={{ background: chat.isSeen ? "transparent" : "#5183fe" }}
-                >
-                    <img src={chat.user?.avatar || profile} alt="User" />
-                    <div className="texts">
-                        <span>{chat.user?.username || 'Unknown User'}</span>
-                        <p>{chat.lastMessage}</p>
+            {filteredChats.length === 0 && !addMode && (
+                <p className="emptyState">
+                    {chats.length === 0 ? "No chats yet. Tap + to find someone." : "No chats match your search."}
+                </p>
+            )}
+            {filteredChats.map((chat) => {
+                const unread = !(chat.seenBy ?? []).includes(currentUser.id);
+                const active = chat.id === activeChatId;
+                return (
+                    <div
+                        className={`item${active ? " active" : ""}`}
+                        key={chat.id}
+                        onClick={() => handleSelect(chat)}
+                        style={{ background: unread ? "#5183fe" : "transparent" }}
+                    >
+                        <img src={chat.user?.avatar || profile} alt="" />
+                        <div className="texts">
+                            <span>{chat.user?.username || "Unknown user"}</span>
+                            <p>{chat.lastMessage?.text ?? "Say hello"}</p>
+                        </div>
                     </div>
-                </div>
-            ))}
-            {addMode && <AddUser onAddChat={handleAddChat} />}
+                );
+            })}
+            {addMode && <AddUser onChatOpened={handleChatOpened} />}
         </div>
     );
 };

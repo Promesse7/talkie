@@ -83,3 +83,14 @@
     }
   }
   
+/* v2 */
+.emptyState {
+  padding: 20px;
+  font-size: 14px;
+  opacity: 0.7;
+  text-align: center;
+}
+
+.item.active {
+  outline: 1px solid #ffffff55;
+}
