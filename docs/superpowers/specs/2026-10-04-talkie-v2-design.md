@@ -193,12 +193,12 @@ Manual verification: `npm run build` passes; `npm run dev` serves the app and `/
 
 ## 11. Deliverables checklist
 
-- [ ] Vite toolchain, tests runnable, build green
-- [ ] New data model in all components, `userChats` gone
-- [ ] Rules, indexes, storage rules, firebase.json
-- [ ] Migration script (not executed)
-- [ ] Null guards and error toasts
-- [ ] Language preference in Register and UserInfo settings
-- [ ] Translation API + dev middleware + client hook + per-bubble toggle
-- [ ] Landing content cleanup, Navbar wired
-- [ ] `.env` untracked, `.env.example` added, README updated
+- [x] Vite toolchain, tests runnable, build green
+- [x] New data model in all components, `userChats` gone
+- [x] Rules, indexes, storage rules, firebase.json
+- [x] Migration script (not executed)
+- [x] Null guards and error toasts
+- [x] Language preference in Register and UserInfo settings
+- [x] Translation API + dev middleware + client hook + per-bubble toggle
+- [x] Landing content cleanup, Navbar wired
+- [x] `.env` untracked, `.env.example` added, README updated

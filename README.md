@@ -68,7 +68,7 @@ only; they are read by the serverless function and the Vite dev middleware, neve
 
 | `TRANSLATE_PROVIDER`      | Env vars                                                                                   | Notes                                                        |
 |---------------------------|--------------------------------------------------------------------------------------------|--------------------------------------------------------------|
-| `libretranslate` (default)| `LIBRETRANSLATE_URL` (default `https://libretranslate.com`), `LIBRETRANSLATE_API_KEY` (optional) | No Kinyarwanda support.                                      |
+| `libretranslate` (default)| `LIBRETRANSLATE_URL` (default `https://libretranslate.com`), `LIBRETRANSLATE_API_KEY` | The public libretranslate.com instance requires an API key (portal.libretranslate.com); without one every request returns 502 and messages show untranslated. Self-hosted instances usually need no key. No Kinyarwanda support. |
 | `huggingface`             | `HF_API_TOKEN`, `HF_MODEL` (default `facebook/nllb-200-distilled-600M`)                    | NLLB supports Kinyarwanda (`kin_Latn`). ISO codes are mapped to NLLB codes in `server/translate/languages.js`. |
 | `none`                    | none                                                                                       | Returns the original text; lets the app run with translation disabled. |
 
