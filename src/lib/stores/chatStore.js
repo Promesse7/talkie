@@ -1,49 +1,20 @@
 import { create } from 'zustand';
-import { auth } from '../firebase.js';
-import { onAuthStateChanged } from 'firebase/auth';
+import { subscribeToUser } from '../chats.js';
 
 export const useChatStore = create((set, get) => ({
-    chatId: null,
-    user: null,
-    currentUser: null,
-    isCurrentUserBlocked: false,
-    isReceiverBlocked: false,
+  chatId: null,
+  receiver: null,
+  _unsubReceiver: null,
 
-    initializeAuth: () => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                set({ currentUser: { id: user.uid, email: user.email } });
-            } else {
-                set({ currentUser: null });
-            }
-        });
-        return unsubscribe;
-    },
+  /** Open a chat and keep the other participant's profile live (blocked list, language, avatar). */
+  openChat(chatId, receiver) {
+    get()._unsubReceiver?.();
+    const unsub = subscribeToUser(receiver.id, (profile) => set({ receiver: profile ?? receiver }));
+    set({ chatId, receiver, _unsubReceiver: unsub });
+  },
 
-    setCurrentUser: (user) => {
-        console.log("Setting current user:", user);
-        set({ currentUser: user });
-    },
-
-    changeChat: (chatId, user) => {
-        const { currentUser } = get();
-        console.log("changeChat called. Current user:", currentUser, "Chat user:", user);
-
-        if (!currentUser || !user) {
-            console.error("Current user or chat user is not defined");
-            return;
-        }
-
-        console.log("Updating chat state");
-        set({
-            chatId,
-            user,
-            isCurrentUserBlocked: false,
-            isReceiverBlocked: false,
-        });
-    },
-
-    changeBlock: () => {
-        set((state) => ({ ...state, isReceiverBlocked: !state.isReceiverBlocked }));
-    },
+  closeChat() {
+    get()._unsubReceiver?.();
+    set({ chatId: null, receiver: null, _unsubReceiver: null });
+  },
 }));

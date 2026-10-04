@@ -1,35 +1,23 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "../../lib/firebase.js";
-import { doc, getDoc } from "firebase/firestore";
-import { useChatStore } from "../../lib/stores/chatStore.js";
+import { toast } from "react-toastify";
+import { auth } from "../../lib/firebase.js";
+import { friendlyAuthError } from "../../lib/authErrors.js";
 import logo from "./logo.png";
 
-const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
+const Login = ({ onSwitchToRegister }) => {
     const [loading, setLoading] = useState(false);
-    const { setCurrentUser, initializeAuth } = useChatStore();
 
-    useEffect(() => {
-        const unsubscribe = initializeAuth();
-        return () => unsubscribe();
-    }, [initializeAuth]);
-
-    const handleLogin = async e => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
-        const formData = new FormData(e.target);
-        const { email, password } = Object.fromEntries(formData);
+        const { email, password } = Object.fromEntries(new FormData(e.target));
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
-            if (userDoc.exists()) {
-                setCurrentUser(userDoc.data());
-                onLoginSuccess();
-            }
+            // The auth listener in useUserStore switches the app to the main view.
+            await signInWithEmailAndPassword(auth, email, password);
         } catch (err) {
-            console.log(err);
-            // Note: toast isn't imported or defined in the original code
-            // toast.error(err.message);
+            console.error(err);
+            toast.error(friendlyAuthError(err));
         } finally {
             setLoading(false);
         }
@@ -47,9 +35,10 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                         >
                             <h2 className="text-2xl font-semibold text-[rgb(171,59,45)]">Welcome Back!</h2>
                             <input
-                                type="text"
+                                type="email"
                                 placeholder="Email"
                                 name="email"
+                                autoComplete="email"
                                 required
                                 className="w-full p-4 bg-[rgba(17,25,40,0.8)] text-white rounded-full outline-none focus:ring-2 focus:ring-[rgb(171,59,45)] placeholder-white placeholder-opacity-80 transition-all duration-300"
                             />
@@ -57,6 +46,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister }) => {
                                 type="password"
                                 placeholder="Password"
                                 name="password"
+                                autoComplete="current-password"
                                 required
                                 className="w-full p-4 bg-[rgba(17,25,40,0.8)] text-white rounded-full outline-none focus:ring-2 focus:ring-[rgb(171,59,45)] placeholder-white placeholder-opacity-80 transition-all duration-300"
                             />

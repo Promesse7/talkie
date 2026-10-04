@@ -1,103 +1,92 @@
-import List from './components/list/list';
-import Chat from './components/chat/chat';
-import Detail from './components/details/detail';
-import Login from './components/login/Login';
-import Register from './components/Register/Register';
-import LandingPage from './components/landingPage/LandingPage';
-import Notification from './components/notification/Notification';
-import { useState, useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './lib/firebase.js';
+import { useEffect, useState } from 'react';
+import List from './components/list/list.jsx';
+import Chat from './components/chat/chat.jsx';
+import Detail from './components/details/detail.jsx';
+import Login from './components/login/Login.jsx';
+import Register from './components/Register/Register.jsx';
+import LandingPage from './components/landingPage/LandingPage.jsx';
+import Notification from './components/notification/Notification.jsx';
 import { useUserStore } from './lib/stores/userStore.js';
 import { useChatStore } from './lib/stores/chatStore.js';
 
-function App() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [currentView, setCurrentView] = useState('landing');
-  const { currentUser, fetchUserInfo } = useUserStore();
-  const { chatId, initializeAuth } = useChatStore();
-
-  useEffect(() => {
-    console.log('App useEffect running');
-    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
-      console.log('Auth state changed', user);
-      if (user) {
-        console.log('User found, fetching user info');
-        try {
-          await fetchUserInfo(user.uid);
-          console.log('User info fetched', currentUser);
-          setCurrentView('main');
-        } catch (error) {
-          console.error('Error fetching user info:', error);
-        }
-      } else {
-        console.log('No user, setting view to landing');
-        setCurrentView('landing');
-      }
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 2000);
-    });
-   
-
-    console.log('Initializing auth');
-    initializeAuth();
-
-    return () => {
-      console.log('Cleaning up auth listener');
-      unsubscribeAuth();
-    };
-  }, [fetchUserInfo, initializeAuth]);
-
-  useEffect(() => {
-    console.log('Current user updated:', currentUser);
-  }, [currentUser]);
-
-  useEffect(() => {
-    console.log('Chat ID updated:', chatId);
-  }, [chatId]);
-
-  if (isLoading) {
-    console.log('Rendering loading state');
-    return (
-      <svg className="pl" width="240" height="240" viewBox="0 0 240 240">
-        <circle className="pl__ring pl__ring--a" cx="120" cy="120" r="105" fill="none" stroke="#000" strokeWidth="20" strokeDasharray="0 660" strokeDashoffset="-330" strokeLinecap="round"></circle>
-        <circle className="pl__ring pl__ring--b" cx="120" cy="120" r="35" fill="none" stroke="#000" strokeWidth="20" strokeDasharray="0 220" strokeDashoffset="-110" strokeLinecap="round"></circle>
-        <circle className="pl__ring pl__ring--c" cx="85" cy="120" r="70" fill="none" stroke="#000" strokeWidth="20" strokeDasharray="0 440" strokeLinecap="round"></circle>
-        <circle className="pl__ring pl__ring--d" cx="155" cy="120" r="70" fill="none" stroke="#000" strokeWidth="20" strokeDasharray="0 440" strokeLinecap="round"></circle>
-      </svg>
-    );
-  };
-
-  console.log('Rendering content, currentView:', currentView);
-
-  const renderContent = () => {
-    switch (currentView) {
-      case 'landing':
-        return <LandingPage onGetStarted={() => setCurrentView('login')} />;
-      case 'login':
-        return <Login onLoginSuccess={() => setCurrentView('main')} onSwitchToRegister={() => setCurrentView('register')} />;
-      case 'register':
-        return <Register onRegisterSuccess={() => setCurrentView('main')} onSwitchToLogin={() => setCurrentView('login')} />;
-      case 'main':
-        return (
-          <>
-            <List />
-            {chatId && <Chat />}
-            {chatId && <Detail />}
-          </>
-        );
-      default:
-        return <div>Error: Unknown view</div>;
-    }
-  };
-
+function Spinner() {
   return (
-    <div className="container">
-      {renderContent()}
-      <Notification />
+    <svg className="pl" width="240" height="240" viewBox="0 0 240 240" role="status" aria-label="Loading">
+      <circle className="pl__ring pl__ring--a" cx="120" cy="120" r="105" fill="none" stroke="#000" strokeWidth="20" strokeDasharray="0 660" strokeDashoffset="-330" strokeLinecap="round" />
+      <circle className="pl__ring pl__ring--b" cx="120" cy="120" r="35" fill="none" stroke="#000" strokeWidth="20" strokeDasharray="0 220" strokeDashoffset="-110" strokeLinecap="round" />
+      <circle className="pl__ring pl__ring--c" cx="85" cy="120" r="70" fill="none" stroke="#000" strokeWidth="20" strokeDasharray="0 440" strokeLinecap="round" />
+      <circle className="pl__ring pl__ring--d" cx="155" cy="120" r="70" fill="none" stroke="#000" strokeWidth="20" strokeDasharray="0 440" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ProfileMissing({ onSignOut }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-4 h-full p-8 text-center text-[rgb(171,59,45)]">
+      <h2 className="text-2xl font-semibold">We could not find your profile</h2>
+      <p className="text-gray-700 max-w-md">
+        Your account exists but its Talkie profile is missing. Sign out and register again, or
+        contact support.
+      </p>
+      <button
+        type="button"
+        onClick={onSignOut}
+        className="py-2 px-6 bg-[rgb(171,59,45)] text-white rounded-lg hover:bg-[rgb(151,42,27)]"
+      >
+        Sign out
+      </button>
     </div>
   );
 }
 
-export default App;
+export default function App() {
+  const status = useUserStore((s) => s.status);
+  const init = useUserStore((s) => s.init);
+  const signOut = useUserStore((s) => s.signOut);
+  const chatId = useChatStore((s) => s.chatId);
+  const closeChat = useChatStore((s) => s.closeChat);
+  const [view, setView] = useState('landing');
+
+  useEffect(() => init(), [init]);
+
+  useEffect(() => {
+    if (status === 'signedOut') {
+      closeChat();
+      setView('landing');
+    }
+  }, [status, closeChat]);
+
+  if (status === 'loading') return <Spinner />;
+
+  let content;
+  if (status === 'profileMissing') {
+    content = <ProfileMissing onSignOut={signOut} />;
+  } else if (status === 'signedOut') {
+    if (view === 'login') content = <Login onSwitchToRegister={() => setView('register')} />;
+    else if (view === 'register') content = <Register onSwitchToLogin={() => setView('login')} />;
+    else {
+      content = (
+        <LandingPage
+          onGetStarted={() => setView('register')}
+          onLogin={() => setView('login')}
+          onRegister={() => setView('register')}
+        />
+      );
+    }
+  } else {
+    content = (
+      <>
+        <List />
+        {chatId && <Chat />}
+        {chatId && <Detail />}
+      </>
+    );
+  }
+
+  return (
+    <div className={`container${status === 'ready' ? ' main' : ''}`}>
+      {content}
+      <Notification />
+    </div>
+  );
+}

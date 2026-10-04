@@ -240,3 +240,16 @@ body {
 
 /* Responsiveness */
 
+
+/* Signed-in layout: list | chat | detail side by side on the brand background */
+.container.main {
+  flex-direction: row;
+  background-color: rgb(133, 48, 36);
+  color: #fff;
+}
+
+@media (max-width: 600px) {
+  .container.main {
+    flex-direction: column;
+  }
+}
