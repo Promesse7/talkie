@@ -194,3 +194,48 @@
     gap: 10px;
   }
 }
+
+/* v2: translation + pagination */
+.message .meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+  opacity: 0.75;
+  margin-top: 4px;
+}
+
+.message .meta .toggle {
+  background: none;
+  border: none;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0;
+}
+
+.message .meta .translating {
+  font-style: italic;
+}
+
+.loadMore {
+  align-self: center;
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: inherit;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.loadMore:disabled {
+  cursor: wait;
+  opacity: 0.5;
+}
+
+.message.pendingImage .texts img {
+  opacity: 0.6;
+}

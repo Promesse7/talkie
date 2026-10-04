@@ -127,3 +127,9 @@
         background-color: rgba(220, 20, 60, 0.796);
     } */
 
+
+.detail .info .option .photos .photosHint {
+  font-size: 13px;
+  color: lightgray;
+  font-weight: 300;
+}

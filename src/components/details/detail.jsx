@@ -1,41 +1,48 @@
-import "./detail.css"
+import "./detail.css";
 import arrowUp from "./up.png";
 import arrowDown from "./down.png";
 import download from "./download.png";
-import { useUserStore } from "../../lib/stores/userStore.js";
 import profile from "./images/placeholder.png";
-import { auth, db } from "../../lib/firebase.js";
-import { useChatStore } from "../../lib/stores/chatStore.js"
 import { arrayRemove, arrayUnion, doc, updateDoc } from "firebase/firestore";
-
-
+import { toast } from "react-toastify";
+import { db } from "../../lib/firebase.js";
+import { useUserStore } from "../../lib/stores/userStore.js";
+import { useChatStore } from "../../lib/stores/chatStore.js";
+import { blockFlags } from "../../lib/chat.js";
+import { languageName } from "../../lib/languages.js";
 
 const Detail = () => {
-  const handleLogout = () => {
-    auth.signOut();
-  };
-    const {chatId, user, isCurrentUserBlocked, isReceiverBlocked, changeBlock} = useChatStore();
-       const { currentUser } = useUserStore();
-    const handleBlock = async () => {
-       if(!user) return;
+    const receiver = useChatStore((s) => s.receiver);
+    const currentUser = useUserStore((s) => s.currentUser);
+    const signOut = useUserStore((s) => s.signOut);
+    const { isCurrentUserBlocked, isReceiverBlocked } = blockFlags(currentUser, receiver);
 
-       const userDocRef = doc(db, "users", currentUser.id);
-       try{
-       await updateDoc(userDocRef, {
-        blocked: isReceiverBlocked ? arrayRemove(user.id) : arrayUnion(user.id),
-       });
-       changeBlock()
-     } catch(err){
-        console.log(err)
-       }
+    const handleBlock = async () => {
+        if (!receiver || !currentUser) return;
+        try {
+            // The live profile subscription in useUserStore updates the flag.
+            await updateDoc(doc(db, "users", currentUser.id), {
+                blocked: isReceiverBlocked ? arrayRemove(receiver.id) : arrayUnion(receiver.id),
+            });
+        } catch (err) {
+            console.error(err);
+            toast.error("Could not update block status.");
+        }
     };
-    
+
+    const handleLogout = () => {
+        signOut().catch((err) => {
+            console.error(err);
+            toast.error("Could not sign out.");
+        });
+    };
+
     return (
         <div className="detail">
             <div className="user">
-                <img src={user.avatar || profile} alt="" />
-                <h2>{user?.username}</h2>
-                <p>Love is one step at hand!</p>
+                <img src={receiver?.avatar || profile} alt="" />
+                <h2>{receiver?.username ?? "Unknown user"}</h2>
+                <p>Reads in {languageName(receiver?.preferredLanguage)}</p>
             </div>
             <div className="info">
                 <div className="option">
@@ -56,34 +63,8 @@ const Detail = () => {
                         <img src={arrowDown} alt="" />
                     </div>
                     <div className="photos">
-                        <div className="photoItem">
-                            <div className="photoDetail">
-                                <img src={profile} alt="" />
-                            <span>photo_2024.png</span>
-                            </div>
-                        <img src={download} alt="" className="icon"/>
-                        </div>
-                        <div className="photoItem">
-                            <div className="photoDetail">
-                                <img src={profile} alt="" />
-                            <span>photo_2024.png</span>
-                            </div>
-                        <img src={download} alt="" className="icon"/>
-                        </div>
-                        <div className="photoItem">
-                            <div className="photoDetail">
-                                <img src={profile} alt="" />
-                            <span>photo_2024.png</span>
-                            </div>
-                        <img src={download} alt="" className="icon" />
-                        </div>
-                        <div className="photoItem">
-                            <div className="photoDetail">
-                                <img src={profile} alt="" />
-                            <span>photo_2024.png</span>
-                            </div>
-                        <img src={download} alt="" className="icon"/>
-                        </div>
+                        <p className="photosHint">Photos you share in this chat will appear here.</p>
+                        <img src={download} alt="" className="icon" style={{ display: "none" }} />
                     </div>
                 </div>
                 <div className="option">
@@ -92,15 +73,13 @@ const Detail = () => {
                         <img src={arrowUp} alt="" />
                     </div>
                 </div>
-                <button className="block"  onClick={handleBlock}>{
-                    
-                    isCurrentUserBlocked ? "You are blocked" : isReceiverBlocked ? "User Blocked" : "Block User"
-                    }</button>
-                <button className="logout"  onClick={handleLogout}>Log Out</button>
+                <button className="block" onClick={handleBlock} disabled={isCurrentUserBlocked}>
+                    {isCurrentUserBlocked ? "You are blocked" : isReceiverBlocked ? "Unblock user" : "Block user"}
+                </button>
+                <button className="logout" onClick={handleLogout}>Log out</button>
             </div>
-           
         </div>
-    )
-}
+    );
+};
 
-export default Detail 
+export default Detail;
