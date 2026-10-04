@@ -92,14 +92,31 @@ async function googleTranslate({ text, source, target }, env, fetchImpl) {
   return { translatedText: translated, provider: 'google' };
 }
 
-const PROVIDERS = { google: googleTranslate, libretranslate: libreTranslate, huggingface: huggingFace };
+// nllb-api (github.com/winstxnhdw/nllb-api): real NLLB-200 1.3B on CPU, free to self-host on a
+// Hugging Face Space (no card needed). No API key. Languages use FLORES-200 codes.
+const DEFAULT_NLLB_API_URL = 'https://winstxnhdw-nllb-api.hf.space';
+
+async function nllbApi({ text, source, target }, env, fetchImpl) {
+  const base = (env.NLLB_API_URL || DEFAULT_NLLB_API_URL).replace(/\/+$/, '');
+  const params = new URLSearchParams({ text, source: toNllbCode(source), target: toNllbCode(target) });
+  const data = await safeFetch(fetchImpl, `${base}/api/v4/translator?${params}`, { method: 'GET' });
+  if (typeof data?.result !== 'string') throw new TranslateError(502, 'Translation provider returned an unexpected response');
+  return { translatedText: data.result.trim(), provider: 'nllb' };
+}
+
+const PROVIDERS = {
+  nllb: nllbApi,
+  google: googleTranslate,
+  libretranslate: libreTranslate,
+  huggingface: huggingFace,
+};
 
 export async function translateText(body, env = {}, fetchImpl = globalThis.fetch) {
   const { text, source, target } = validate(body);
   if (!text.trim()) return { translatedText: '', provider: 'none' };
   if (source === target) return { translatedText: text, provider: 'none' };
 
-  const providerName = String(env.TRANSLATE_PROVIDER || 'google').toLowerCase();
+  const providerName = String(env.TRANSLATE_PROVIDER || 'nllb').toLowerCase();
   if (providerName === 'none') return { translatedText: text, provider: 'none' };
 
   const provider = PROVIDERS[providerName];

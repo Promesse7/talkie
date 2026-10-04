@@ -78,7 +78,9 @@ describe('toNllbCode', () => {
 });
 
 describe('default provider', () => {
-  it('is google, so a missing key explains itself', async () => {
-    await expect(translateText({ text: 'hi', source: 'en', target: 'rw' }, {}, vi.fn())).rejects.toMatchObject({ status: 500, message: expect.stringContaining('GOOGLE_TRANSLATE_API_KEY') });
+  it('is nllb, which needs no key', async () => {
+    const fetchImpl = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ result: 'Muraho' }) }));
+    await expect(translateText({ text: 'hi', source: 'en', target: 'rw' }, {}, fetchImpl)).resolves.toEqual({ translatedText: 'Muraho', provider: 'nllb' });
+    expect(fetchImpl.mock.calls[0][0]).toContain('/api/v4/translator?');
   });
 });
