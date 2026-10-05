@@ -18,7 +18,10 @@ export default function LanguageSettings({ onClose }) {
 
   return (
     <div className="languageSettings" role="dialog" aria-label="Settings">
-      <label htmlFor="preferredLanguage">I read messages in</label>
+      <label htmlFor="preferredLanguage">
+        Show me messages in
+        <small className="hint">What others write is translated into this language for you.</small>
+      </label>
       <select id="preferredLanguage" value={value} onChange={onChange} disabled={saving}>
         {SUPPORTED_LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.name} · {l.nativeName}</option>)}
       </select>

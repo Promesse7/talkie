@@ -5,6 +5,7 @@ import search from "./search.png";
 import plus from "./plus.png";
 import minus from "./minus.png";
 import AddUser from "./addUser/addUser";
+import ChatPreview from "./ChatPreview.jsx";
 import profile from "./images/placeholder.png";
 import { useUserStore } from "../../../lib/stores/userStore.js";
 import { useChatStore } from "../../../lib/stores/chatStore.js";
@@ -81,7 +82,7 @@ const ChatList = () => {
                         <img src={chat.user?.avatar || profile} alt="" />
                         <div className="texts">
                             <span>{chat.user?.username || "Unknown user"}</span>
-                            <p>{chat.lastMessage?.text ?? "Say hello"}</p>
+                            <ChatPreview chat={chat} viewerId={currentUser.id} viewerLang={currentUser.preferredLanguage} />
                         </div>
                     </div>
                 );

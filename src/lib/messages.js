@@ -67,7 +67,7 @@ export async function sendMessage({ chatId, sender, receiver, text, file }) {
 
   const ref = await addDoc(messagesRef(chatId), message);
   await updateDoc(doc(db, 'chats', chatId), {
-    lastMessage: { text: trimmed || 'Photo', senderId: sender.id, createdAt: serverTimestamp() },
+    lastMessage: { text: trimmed || 'Photo', senderId: sender.id, sourceLanguage, createdAt: serverTimestamp() },
     updatedAt: serverTimestamp(),
     seenBy: [sender.id],
   });

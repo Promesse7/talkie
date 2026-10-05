@@ -100,7 +100,11 @@ const Register = ({ onSwitchToLogin }) => {
                     <input type="email" placeholder="Email" name="email" autoComplete="email" required className={inputClass} />
                     <input type="password" placeholder="Password" name="password" autoComplete="new-password" required minLength={6} className={inputClass} />
                     <label htmlFor="preferredLanguage" className="w-4/5 text-sm text-[rgb(171,59,45)] -mb-3">
-                        I read messages in
+                        Show me messages in
+                        <span className="block text-xs text-gray-500 font-normal">
+                            What others write is translated into this language for you. What you write is
+                            never changed on your screen.
+                        </span>
                     </label>
                     <select
                         id="preferredLanguage"
