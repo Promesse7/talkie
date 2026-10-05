@@ -62,3 +62,23 @@ export function absorbDroppedMessages(prevLive, nextLive, older) {
   if (!dropped.length) return older;
   return [...older, ...dropped];
 }
+
+const LANGUAGE_NAMES = {
+  en: 'English', rw: 'Kinyarwanda', fr: 'French', sw: 'Swahili', es: 'Spanish',
+  pt: 'Portuguese', de: 'German', ar: 'Arabic', zh: 'Chinese',
+};
+const langName = (code) => LANGUAGE_NAMES[code] ?? code ?? 'English';
+
+/**
+ * One line that states both sides of a conversation's languages, e.g.
+ * "You read in French · Prometheus reads in English". Shown under the other person's name,
+ * where a bare "Reads in English" was being read as a statement about the viewer.
+ */
+export function languageSummary(me, them) {
+  const theirs = `${them?.username ?? 'They'} reads in ${langName(them?.preferredLanguage)}`;
+  if (!me) return theirs;
+  if ((me.preferredLanguage ?? 'en') === (them?.preferredLanguage ?? 'en')) {
+    return `You both read in ${langName(me.preferredLanguage)}`;
+  }
+  return `You read in ${langName(me.preferredLanguage)} · ${theirs}`;
+}

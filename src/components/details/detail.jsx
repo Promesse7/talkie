@@ -8,8 +8,7 @@ import { toast } from "react-toastify";
 import { db } from "../../lib/firebase.js";
 import { useUserStore } from "../../lib/stores/userStore.js";
 import { useChatStore } from "../../lib/stores/chatStore.js";
-import { blockFlags } from "../../lib/chat.js";
-import { languageName } from "../../lib/languages.js";
+import { blockFlags, languageSummary } from "../../lib/chat.js";
 
 const Detail = () => {
     const receiver = useChatStore((s) => s.receiver);
@@ -42,7 +41,7 @@ const Detail = () => {
             <div className="user">
                 <img src={receiver?.avatar || profile} alt="" />
                 <h2>{receiver?.username ?? "Unknown user"}</h2>
-                <p>Reads in {languageName(receiver?.preferredLanguage)}</p>
+                <p>{languageSummary(currentUser, receiver)}</p>
             </div>
             <div className="info">
                 <div className="option">

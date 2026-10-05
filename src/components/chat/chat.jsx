@@ -13,8 +13,7 @@ import { toast } from "react-toastify";
 import MessageBubble from "./MessageBubble.jsx";
 import { useChatStore } from "../../lib/stores/chatStore.js";
 import { useUserStore } from "../../lib/stores/userStore.js";
-import { absorbDroppedMessages, blockFlags, dedupeById } from "../../lib/chat.js";
-import { languageName } from "../../lib/languages.js";
+import { absorbDroppedMessages, blockFlags, dedupeById, languageSummary } from "../../lib/chat.js";
 import {
     fetchOlderMessages,
     markMessagesSeen,
@@ -133,7 +132,7 @@ const Chat = () => {
                     <img src={receiver?.avatar || profile} alt="" />
                     <div className="texts">
                         <span>{receiver?.username ?? "Unknown user"}</span>
-                        <p>Reads in {languageName(receiver?.preferredLanguage)}</p>
+                        <p>{languageSummary(currentUser, receiver)}</p>
                     </div>
                 </div>
                 <div className="icons">
